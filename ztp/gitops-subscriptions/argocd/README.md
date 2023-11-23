@@ -122,8 +122,7 @@ EOF
              - sno-extra-manifest/ <-- ztp-containers's reference manifests
              - custom-manifests/ <-- user's custom manifests
           ```      
-   3. Add the SiteConfig CR to the kustomization.yaml in the 'generators' section, much like in the example out/argocd/example/siteconfig/kustomization.yaml
-   4. Commit your SiteConfig and associated kustomization.yaml in git.
+   3. Commit your SiteConfig into git.
 3. Create the PolicyGenTemplate CR for your site in your local clone of the git repository:
    1. Begin by choosing an appropriate example from out/argocd/example/policygentemplates. This directory demonstrates a 3-level policy framework which represents a well-supported low-latency profile tuned for the needs of 5G Telco DU deployments:
       - A single `common-ranGen.yaml` that should apply to all types of sites

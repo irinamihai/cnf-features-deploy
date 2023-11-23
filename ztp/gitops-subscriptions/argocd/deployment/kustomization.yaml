@@ -8,3 +8,4 @@ resources:
   - gitops-cluster-rolebinding.yaml
   - clusters-app.yaml
   - policies-app.yaml
+  - sc-plugin-config.yaml

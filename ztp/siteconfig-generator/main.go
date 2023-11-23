@@ -24,6 +24,13 @@ func main() {
 		scBuilder.SetLocalExtraManifestPath(*localExtraManifestPath)
 	}
 
+	if len(siteConfigFiles) == 0 {
+		files, _ := siteConfigs.GetFiles("./")
+		for _, file := range files {
+			siteConfigFiles = append(siteConfigFiles, file.Name())
+		}
+	}
+
 	for _, siteConfigFile := range siteConfigFiles {
 		fileData, err := siteConfigs.ReadFile(siteConfigFile)
 		if err != nil {

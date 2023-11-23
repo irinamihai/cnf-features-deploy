@@ -14,33 +14,35 @@
     },
     "kustomizeBuildOptions": "--enable-alpha-plugins",
     "repo": {
-      "volumes": [
+      "env": [
         {
-          "name": "kustomize",
-          "emptyDir": {}
+          "name": "ARGOCD_EXEC_TIMEOUT",
+          "value": "360s"
+        },
+        {
+          "name": "KUSTOMIZE_PLUGIN_HOME",
+          "value": "/.config/kustomize/plugin"
         }
       ],
       "initContainers": [
         {
-          "resources": {
-          },
           "terminationMessagePath": "/dev/termination-log",
           "name": "kustomize-plugin",
           "command": [
             "/exportkustomize.sh"
           ],
-          "args": [
-            "/.config"
-          ],
           "imagePullPolicy": "Always",
           "volumeMounts": [
             {
-              "name": "kustomize",
-              "mountPath": "/.config"
+              "mountPath": "/.config",
+              "name": "kustomize"
             }
           ],
           "terminationMessagePolicy": "File",
-          "image": "quay.io/openshift-kni/ztp-site-generator:latest"
+          "image": "quay.io/openshift-kni/ztp-site-generator:latest",
+          "args": [
+            "/.config"
+          ]
         },
         {
           "args": [
@@ -50,31 +52,15 @@
           "command": [
             "/bin/bash"
           ],
-          "image": "registry.redhat.io/rhacm2/multicluster-operators-subscription-rhel8:v2.7",
-          "name": "policy-generator-install",
+          "image": "registry.redhat.io/rhacm2/multicluster-operators-subscription-rhel8:v2.8",
           "imagePullPolicy": "Always",
+          "name": "policy-generator-install",
           "volumeMounts": [
             {
               "mountPath": "/.config",
               "name": "kustomize"
             }
           ]
-        }
-      ],
-      "volumeMounts": [
-        {
-          "name": "kustomize",
-          "mountPath": "/.config"
-        }
-      ],
-      "env": [
-        {
-          "name": "ARGOCD_EXEC_TIMEOUT",
-          "value": "360s"
-        },
-        {
-          "name": "KUSTOMIZE_PLUGIN_HOME",
-          "value": "/.config/kustomize/plugin"
         }
       ],
       "resources": {
@@ -86,7 +72,53 @@
           "cpu": "1",
           "memory": "2Gi"
         }
-      }
+      },
+      "sidecarContainers": [
+        {
+          "command": [
+            "/var/run/argocd/argocd-cmp-server"
+          ],
+          "image": "quay.io/openshift-kni/ztp-site-generator:latest",
+          "name": "sc-plugin-config",
+          "volumeMounts": [
+            {
+              "mountPath": "/var/run/argocd",
+              "name": "var-files"
+            },
+            {
+              "mountPath": "/home/argocd/cmp-server/plugins",
+              "name": "plugins"
+            },
+            {
+              "mountPath": "/home/argocd/cmp-server/config/plugin.yaml",
+              "name": "sc-plugin-config",
+              "subPath": "plugin.yaml"
+            },
+            {
+              "mountPath": "/tmp",
+              "name": "tmp"
+            }
+          ]
+        }
+      ],
+      "volumeMounts": [
+        {
+          "mountPath": "/.config",
+          "name": "kustomize"
+        }
+      ],
+      "volumes": [
+        {
+          "configMap": {
+            "name": "sc-plugin-config"
+          },
+          "name": "sc-plugin-config"
+        },
+        {
+          "emptyDir": {},
+          "name": "kustomize"
+        }
+      ]
     }
   }
 }

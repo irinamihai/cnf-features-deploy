@@ -1,0 +1,17 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: sc-plugin-config
+  namespace: openshift-gitops
+data:
+  plugin.yaml: |
+    apiVersion: argoproj.io/v1alpha1
+    kind: ConfigManagementPlugin
+    metadata:
+      name: sc-plugin-config
+    spec:
+      version: v1.0
+      init:
+        command: [echo, 'Init sidecar sc-plugin-config' ]
+      generate:
+        command: [/kustomize/plugin/ran.openshift.io/v1/siteconfig/SiteConfig, -manifestPath, /kustomize/plugin/ran.openshift.io/v1/siteconfig/extra-manifest]

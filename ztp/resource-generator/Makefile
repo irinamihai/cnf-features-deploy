@@ -23,6 +23,10 @@ help: ## Display this help.
 build: ## Build the ZTP image
 	cd ../..  && podman build -t ${IMAGE_NAME}:${VERSION} --build-arg=IMAGE_REF='$(IMAGE_REF)' -f ztp/resource-generator/Containerfile .
 
+# For Dev purpose change the REG_URL and push the image for testing.
+#push:
+#	podman push ${IMAGE_NAME}:${VERSION} ${IMAGE_URL}:${VERSION}
+
 export: ## Copy resources from container image to out/ directory
 	mkdir -p out
 	podman run --rm --log-driver=none ${IMAGE_NAME}:${VERSION} extract /home/ztp --tar | tar x -C out
