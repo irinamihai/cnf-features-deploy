@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -442,4 +443,43 @@ func suppressCrGeneration(kind string, crSuppression []string) bool {
 		}
 	}
 	return false
+}
+
+func UpdateSiteConfigError(errorConfigMap interface{}, errorNs interface{}, siteConfigFile string, errorMsg string) {
+	
+	if (errorConfigMap.(map[string]interface{})["data"] == nil) {
+		errorData := make(map[string]string)
+		errorConfigMap.(map[string]interface{})["data"] = errorData
+	}
+
+	errorData := errorConfigMap.(map[string]interface{})["data"].(map[string]string)
+
+	for strings.HasPrefix(siteConfigFile, "..") {
+		siteConfigFile = siteConfigFile[2:]
+	}
+
+	siteConfigFile = strings.Replace(siteConfigFile, "/", "--", -1)
+
+	// A ConfigMap's key must match the '[-._a-zA-Z0-9]+' regex.
+	for !regexp.MustCompile(`^[-._a-zA-Z0-9]+$`).MatchString(siteConfigFile) {
+		siteConfigFile = siteConfigFile[1:]
+	}
+
+	errorData[siteConfigFile] = errorMsg
+	log.Print(errorMsg)
+}
+
+// PrintSiteConfigError prints the error Namespace and ConfigMap
+func PrintSiteConfigError(errorConfigMap interface{}, errorNs interface{}) {
+	//cr, err := yaml.Marshal(errorNs)
+	//if err != nil {
+    //		log.Fatalf("Error: could not marshal resource from CR %s: %s\n", errorNs, err)
+    //	}
+	//fmt.Print(string(cr))
+	fmt.Print(string(Separator))
+	cr, err := yaml.Marshal(errorConfigMap)
+	if err != nil {
+		log.Fatalf("Error: could not marshal resource from CR %s: %s\n", errorNs, err)
+	}
+	fmt.Println(string(cr))
 }

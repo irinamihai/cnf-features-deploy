@@ -2388,3 +2388,71 @@ func Test_siteConfigMap(t *testing.T) {
 		})
 	}
 }
+
+func Test_updateSiteConfigError(t *testing.T) {
+	tests := []struct {
+		name                       string
+		errorConfigMap             interface{}
+		errorNs                    interface{}
+		siteConfigFile             string
+		errorMsg                   string
+		expectedErrorConfigMapData map[string]string
+	}{
+		{
+			name: "Update empty SiteConfig Error ConfigMap with unacceptable key",
+			errorConfigMap: map[string]interface{}{
+				"apiVersion": "v1",
+			    "data": nil,
+			    "kind": "ConfigMap",
+			    "metadata": map[string]interface{}{
+				    "name": "ztp-error",
+				    "namespace": "ztp-error",
+			    }},
+			errorNs: map[string]interface{}{
+				"apiVersion": "v1",
+				"kind": "Namespace",
+				"metadata": map[string]interface{}{
+					"name": "ztp-error",
+				}},
+			siteConfigFile: "../siteConfig1.yaml",
+			errorMsg: "Could not find siteConfigFile",
+			expectedErrorConfigMapData: map[string]string {
+				"--siteConfig1.yaml": "Could not find siteConfigFile",
+			},
+		},
+		{
+			name: "Update non empty SiteConfig Error ConfigMap",
+			errorConfigMap: map[string]interface{}{
+				"apiVersion": "v1",
+			    "kind": "ConfigMap",
+			    "metadata": map[string]interface{}{
+				    "name": "ztp-error",
+				    "namespace": "ztp-error",
+				},
+			    "data": map[string]string{
+					"--siteConfig1.yaml": "Could not find siteConfigFile",
+				}},
+			errorNs: map[string]interface{}{
+					"apiVersion": "v1",
+					"kind": "Namespace",
+					"metadata": map[string]interface{}{
+						"name": "ztp-error",
+					}},
+			siteConfigFile: "siteConfig1.yaml",
+			errorMsg: "Error: could not build the entire SiteConfig defined by siteConfig1.yaml",
+			expectedErrorConfigMapData: map[string]string {
+				"siteConfig1.yaml": "Error: could not build the entire SiteConfig defined by siteConfig1.yaml",
+				"--siteConfig1.yaml": "Could not find siteConfigFile",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		//if (test.errorConfigMap.(map[string]interface{})["data"] == nil) {
+		//	errorData := make(map[string]string)
+		//	test.errorConfigMap.(map[string]interface{})["data"] = errorData
+		//}
+		UpdateSiteConfigError(test.errorConfigMap, test.errorNs, test.siteConfigFile, test.errorMsg)
+		assert.Equal(t, test.expectedErrorConfigMapData, test.errorConfigMap.(map[string]interface{})["data"])
+	}
+}

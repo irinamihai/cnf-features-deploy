@@ -18,6 +18,7 @@ import (
 )
 
 type SiteConfigBuilder struct {
+	ErrorClusterCRs            []interface{}
 	SourceClusterCRs           []interface{}
 	scBuilderExtraManifestPath string
 }
@@ -49,6 +50,36 @@ func (scbuilder *SiteConfigBuilder) loadSourceClusterCRs(clusterCRs string) erro
 
 func (scbuilder *SiteConfigBuilder) SetLocalExtraManifestPath(path string) {
 	scbuilder.scBuilderExtraManifestPath = path
+}
+
+func (scbuilder *SiteConfigBuilder) BuildErrorCRs() (interface{}, interface{}, error) {
+	errorNs, err := scbuilder.loadErrorCR(siteConfigNsErrorCR)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	configMapError, err := scbuilder.loadErrorCR(siteConfigConfigMapErrorCR)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return errorNs, configMapError, nil
+
+}
+
+func (scbuilder *SiteConfigBuilder) loadErrorCR(siteConfigErrorCR string) (interface{}, error) {
+	errorCRYaml, err := scbuilder.splitYamls([]byte(siteConfigErrorCR))
+	if err != nil {
+		return nil, err
+	}
+	var clusterCR interface{}
+	err = yaml.Unmarshal(errorCRYaml[0], &clusterCR)
+
+	if err != nil {
+		return nil, err
+	}
+	
+	return clusterCR, nil
 }
 
 func (scbuilder *SiteConfigBuilder) Build(siteConfigTemp SiteConfig) (map[string][]interface{}, error) {
