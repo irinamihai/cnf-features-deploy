@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	siteConfigs "github.com/openshift-kni/cnf-features-deploy/ztp/siteconfig-generator/siteConfig"
@@ -27,9 +28,14 @@ func main() {
 	if len(siteConfigFiles) == 0 {
 		files, _ := siteConfigs.GetFiles("./")
 		for _, file := range files {
-			siteConfigFiles = append(siteConfigFiles, file.Name())
+			if strings.Contains(file.Name(), ".yaml") || strings.Contains(file.Name(), ".yml") {
+			    siteConfigFiles = append(siteConfigFiles, file.Name())
+			}
 		}
 	}
+
+	fmt.Fprintf(os.Stderr, "siteConfigFiles: %s", siteConfigFiles)
+	log.Printf("siteConfigFiles %s", siteConfigFiles)
 
 	for _, siteConfigFile := range siteConfigFiles {
 		fileData, err := siteConfigs.ReadFile(siteConfigFile)

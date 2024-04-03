@@ -26,6 +26,9 @@ RUN microdnf install -y tar util-linux
 # Copy in the kustomize plugin directory structure
 COPY --from=builder $BUILDER_ZTP/policygenerator-kustomize-plugin/kustomize /kustomize
 COPY --from=builder $BUILDER_ZTP/siteconfig-generator-kustomize-plugin/kustomize /kustomize
+COPY --from=builder $BUILDER_ZTP/siteconfig-generator-kustomize-plugin/kustomize/plugin/ran.openshift.io/v1/siteconfig/SiteConfig /usr/bin/
+RUN ls -al /usr/bin/
+
 # Copy in the examples and source-cr files
 RUN mkdir -p $ZTP_HOME
 WORKDIR $ZTP_HOME
@@ -35,6 +38,9 @@ COPY --from=builder $BUILDER_ZTP/gitops-subscriptions/argocd argocd
 RUN chown -R 1001:1001 $ZTP_HOME
 # Copy in the entrypoint scripts
 COPY --from=builder $BUILDER_ZTP/resource-generator/entrypoints/* /usr/bin
+COPY --from=builder $BUILDER_ZTP/resource-generator/siteconfig-krm-generator.sh /usr/bin
+COPY --from=builder $BUILDER_ZTP/resource-generator/kustomize /usr/bin
+COPY --from=builder $BUILDER_ZTP/resource-generator/yq /usr/bin
 COPY --chown=1001 --from=builder $BUILDER_ZTP/resource-generator/exportkustomize.sh /
 USER 1001
 CMD entrypoints

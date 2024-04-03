@@ -33,7 +33,7 @@ test: build $(KUSTOMIZE)
 
 gen-files: build $(KUSTOMIZE)
 	@mkdir -p out/
-	$(KUSTOMIZE) build --enable-alpha-plugins ./ -o out/
+	$(KUSTOMIZE) build --enable-alpha-plugins testSiteConfig -o out/
 
 clean:
 	rm -rf kustomize out
