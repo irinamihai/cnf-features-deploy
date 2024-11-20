@@ -321,6 +321,13 @@ func (pbuilder *PolicyBuilder) setValues(sourceMap map[string]interface{}, value
 			}
 			continue
 		}
+
+		valueMapString, ok := valueMap[k].(string)
+		if ok && strings.HasPrefix(valueMapString, "{{hub") && strings.HasSuffix(valueMapString, "hub}}") {
+			sourceMap[k] = valueMap[k]
+			continue
+		}
+		
 		if reflect.ValueOf(sourceMap[k]).Kind() == reflect.Map {
 			sourceMap[k] = pbuilder.setValues(v.(map[string]interface{}), valueMap[k].(map[string]interface{}))
 		} else if reflect.ValueOf(v).Kind() == reflect.Slice ||

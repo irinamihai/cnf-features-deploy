@@ -717,3 +717,107 @@ spec:
 	assert.Error(t, err)
 	assert.Equal(t, fmt.Errorf("Updating spec/data/status of multiple yamls structure in same file GenericMultiYaml.yaml is not allowed. Instead separate them in multiple files"), err)
 }
+
+func TestHubTemplatingOverrideArray(t *testing.T) {
+	input := `
+apiVersion: ran.openshift.io/v1
+kind: PolicyGenTemplate
+metadata:
+  name: "test"
+  namespace: "test"
+spec:
+  bindingRules:
+    justfortest: "true"
+  evaluationInterval:
+    compliant: 30m
+    noncompliant: 20s
+  sourceFiles:
+    - fileName: GenericCR.yaml
+      policyName: "gen-policy"
+      spec:
+        topListMap2: '{{hub fromConfigMap "" .ManagedClusterName) "devicePath" hub}}'
+`
+    // The expected policy should include:
+	// spec:
+	//   topListMap: '{{hub fromConfigMap "" .ManagedClusterName) "devicePath" hub}}'
+
+	// Read in the test PGT
+	pgt := utils.PolicyGenTemplate{}
+	err := yaml.Unmarshal([]byte(input), &pgt)
+	assert.Nil(t, err)
+
+	// Set up the files handler to pick up local source-crs and skip any output
+	fHandler := utils.NewFilesHandler("./testData/GenericSourceFiles", "/dev/null", "/dev/null")
+
+	// Run the PGT through the generator
+	pBuilder := NewPolicyBuilder(fHandler)
+	policies, err := pBuilder.Build(pgt)
+
+	// Validate the run.
+	assert.Nil(t, err)
+	assert.NotNil(t, policies)
+	objects := extractCRsFromPolicies(t, policies)
+	assert.Equal(t, len(objects), 1)
+	objDef := objects[0].ObjectDefinition
+	// Validate the hub template was included in the ACM policy.
+	topListMapValue := objDef["spec"].(map[string]interface{})["topListMap2"]
+	assert.Equal(t, topListMapValue.(string), "{{hub fromConfigMap \"\" .ManagedClusterName) \"devicePath\" hub}}")
+}
+
+func TestHubTemplatingOverrideScalarInMap(t *testing.T) {
+	input := `
+apiVersion: ran.openshift.io/v1
+kind: PolicyGenTemplate
+metadata:
+  name: "test"
+  namespace: "test"
+spec:
+  bindingRules:
+    justfortest: "true"
+  evaluationInterval:
+    compliant: 30m
+    noncompliant: 20s
+  sourceFiles:
+    - fileName: GenericCR.yaml
+      policyName: "gen-policy"
+      spec:
+        topListMap2:
+          - mapKey2:
+              scalarInMap: '{{hub fromConfigMap "" .ManagedClusterName) "devicePath" hub}}'
+`
+
+	// Read in the test PGT
+	pgt := utils.PolicyGenTemplate{}
+	err := yaml.Unmarshal([]byte(input), &pgt)
+	assert.Nil(t, err)
+
+	// Set up the files handler to pick up local source-crs and skip any output
+	fHandler := utils.NewFilesHandler("./testData/GenericSourceFiles", "/dev/null", "/dev/null")
+
+	// Run the PGT through the generator
+	pBuilder := NewPolicyBuilder(fHandler)
+	policies, err := pBuilder.Build(pgt)
+
+	// Validate the run.
+	assert.Nil(t, err)
+	assert.NotNil(t, policies)
+	objects := extractCRsFromPolicies(t, policies)
+	assert.Equal(t, len(objects), 1)
+	objDef := objects[0].ObjectDefinition
+	topListMapValue := objDef["spec"].(map[string]interface{})["topListMap2"]
+	expectedTopListMapValue := []map[string]interface{}{
+		{
+			"mapKey1": "aaa",
+			"mapKey2": map[string]interface{}{
+				"scalarInMap": "{{hub fromConfigMap \"\" .ManagedClusterName) \"devicePath\" hub}}",
+			},
+		},
+		{
+			"mapKey1": "ccc",
+			"mapKey2": map[string]interface{}{
+				"scalarInMap": "ddd",
+			},
+		},
+	}
+	assert.ElementsMatch(t, topListMapValue, expectedTopListMapValue)
+}

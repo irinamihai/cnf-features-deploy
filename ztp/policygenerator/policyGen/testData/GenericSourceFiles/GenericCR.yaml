@@ -17,6 +17,13 @@ spec:
       mapKey2: bbb
     - mapKey1: ccc
       mapKey2: ddd
+  topListMap2:
+    - mapKey1: aaa
+      mapKey2:
+        scalarInMap: bbb
+    - mapKey1: ccc
+      mapKey2:
+        scalarInMap: ddd
   topList:
     - a
     - b
