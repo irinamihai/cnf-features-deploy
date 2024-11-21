@@ -6,13 +6,25 @@ metadata:
   annotations:
     ran.openshift.io/ztp-deploy-wave: "10"
 spec:
+  filters:
+  - name: ran-du-labels
+    openshiftLabels:
+      $openshiftlabels
+    type: openshiftLabels
   outputs:
-  - name: kafka-output
-    type: kafka
-    kafka:
+  - kafka:
       url: tcp://$kafka-server:9092/endpoint
+    name: kafka-output
+    type: kafka
   pipelines:
-  - $pipelines
+  - filterRefs:
+    - ran-du-labels
+    inputRefs:
+    - audit
+    - infrastructure
+    name: all-to-default
+    outputRefs:
+    - kafka-output
   serviceAccount:
     name: collector
 status:
